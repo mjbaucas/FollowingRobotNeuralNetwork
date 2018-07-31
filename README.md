@@ -1,1 +1,3 @@
 # FollowingRobotNeuralNetwork
+
+python neuralnetwork.py
