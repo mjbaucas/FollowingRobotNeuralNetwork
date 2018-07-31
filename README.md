@@ -1,3 +1,4 @@
 # FollowingRobotNeuralNetwork
 
-python neuralnetwork.py
+Run
+> python neuralnetwork.py
