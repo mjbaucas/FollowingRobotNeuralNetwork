@@ -1,7 +1,10 @@
+#Uses both mapping and compass values to create an environment that can translate sensor values to robot motion
+
 class Environment:
     def init(self, sensor0, sensor1, sensor2):
         self.calibrate(sensor0, sensor1, sensor2)
         self.rules = self.set_rules()
+        self.compass = self.set_compass()
 
     def set_rules(self):
         file = open("rules.txt", "r")
@@ -9,8 +12,18 @@ class Environment:
         temp_dict = {}
         for line in file:
             temp_list = line.split()
-            temp_dict[f'{temp_list[0]}-{temp_list[1]}-{temp_list[2]}'] = [temp_list[3], temp_list[4]]
+            temp_dict[f'{temp_list[0]}-{temp_list[1]}-{temp_list[2]}'] = temp_list[3]
         
+        return temp_dict
+    
+    def set_compass(self):
+        file = open("compass.txt", "r")
+        
+        temp_dict = {}
+        for line in file:
+            temp_list = line.split()
+            temp_dict[temp_list[0]] = [int(temp_list[1]), int(temp_list[2])]
+    
         return temp_dict
 
     def calibrate(self, sensor0, sensor1, sensor2):
@@ -53,7 +66,7 @@ class Environment:
         return sensor_value
 
     def evaluate(self, sensor0, sensor1, sensor2):
-        direction, calibrate = self.evaluate_direction(sensor0, sensor1, sensor2)
+        direction = self.evaluate_direction(sensor0, sensor1, sensor2)
         self.evaluate_output(direction)
 
     def evaluate_direction(self, sensor0, sensor1, sensor2):
@@ -61,42 +74,34 @@ class Environment:
         value1 = self.evaluate_sensor(sensor1)
         value2 = self.evaluate_sensor(sensor2)
         
-        direction = 'X'
-        calibrate = 'X'
+        heat_map = [value0, value1, value1, value1, value1, value2, value2]
 
+        direction = 'C'
         if hasattr(self, 'rules'):
             temp_list = self.rules[f'{value0}-{value1}-{value2}']
-            direction = temp_list[0]
-            calibrate = temp_list[1]
+            direction = temp_list
 
-            if calibrate == 'C':
+            if direction == 'C':
                 self.calibrate(sensor0, sensor1, sensor2)
-                if direction == 'X':
-                    direction, calibrate = self.evaluate_direction(sensor0, sensor1, sensor2)
-        
-        return direction, calibrate
+                try:
+                    direction = self.evaluate_direction(sensor0, sensor1, sensor2)
+                except RuntimeError as re:
+                    direction = 'T'
+
+        return direction
 
     def evaluate_output(self, direction):
-        if direction == 'N':
-            print('Forward')              
-        elif direction == 'NE':
-            print('45* Clockwise')              
-        elif direction == 'E':
-            print('90* Clockwise')
-        elif direction == 'SE':
-            print('135* Clockwise')          
-        elif direction == 'S':
-            print('180* Clockwise')              
-        elif direction == 'SW':
-            print('135* Counter Clockwise')              
-        elif direction == 'W':
-            print('90* Counter Clockwise')              
-        elif direction == 'SW':
-            print('45* Counter Clockwise')              
+        compass = self.compass            
+
+        if direction in compass:
+            if compass[direction][1] == 0:
+                print(f'{direction}: Turn {compass[direction][0]} notch(es) clockwise')
+            elif compass[direction][1] == 1:
+                print(f'{direction}: Turn {compass[direction][0]} notch(es) counter-clockwise')
+            else:
+                print(f'{direction}: Unknown direction and moves')
         else:
-            print('Stop')              
-
-    def print_values(self):
-        print(f'HIGH: {self.high}, MID: {self.mid}, LOW: {self.low}')       
-
-    
+            if direction == 'T':
+                print(f'T: Robot timed out, stuck in calibrate loop')
+            else:
+                print(f'U: Unknown direction and moves')
