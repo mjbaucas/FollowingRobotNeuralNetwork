@@ -4,7 +4,7 @@ int i;                // Looping variable
 int j;                // Looping variable
 int inPin[3];         // Input pins going to the ADC
 int outPin = 13;      // Output serial pin for motor control
-int timeDelay = 2;    // Delay between issuing a signal and reading, milliseconds
+int timeDelay = 20;    // Delay between issuing a signal and reading, milliseconds
 int threshold = 50;   // Value needed to be surpassed for robot to react
 
 int proxPin = 11;     // Digital input pin used for the proximity sensor
@@ -125,7 +125,7 @@ void loop() {
     {
       inPin[0] = analogRead(0);
       delay(timeDelay);
-      Serial.print("Waiting\n");
+      //Serial.print("Waiting\n");
     }
 
     if (inPin[0] >= mode[0] + threshold || 1)
