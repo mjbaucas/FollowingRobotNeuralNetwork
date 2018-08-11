@@ -1,10 +1,12 @@
 #Uses both mapping and compass values to create an environment that can translate sensor values to robot motion
+from common import find_indexes_in_list
 
 class Environment:
     def init(self, sensor0, sensor1, sensor2):
+        self.digital = [0, 0, 0]
+        self.baseline = [0, 0, 0]
+        self.sensors = [0, 0, 0]
         self.calibrate(sensor0, sensor1, sensor2)
-        self.rules = self.set_rules()
-        self.compass = self.set_compass()
 
     def set_rules(self):
         file = open("rules.txt", "r")
@@ -26,82 +28,65 @@ class Environment:
     
         return temp_dict
 
-    def calibrate(self, sensor0, sensor1, sensor2):
-        value_high = max(sensor0, sensor1, sensor2)
-        value_low = min(sensor0, sensor1, sensor2)
+    def calibrate(self, sensor0_data, sensor1_data, sensor2_data):
+        self.baseline[0] = min(sensor0_data)
+        self.baseline[1] = min(sensor1_data)
+        self.baseline[2] = min(sensor2_data)
         
-        temp_list = [sensor0, sensor1, sensor2]
-        temp_list = sorted(temp_list)
-        value_mid = temp_list[1]
-
-        if not hasattr(self, 'high') or self.high < value_high:
-            self.high = value_high
-            
-        if not hasattr(self, 'mid') or self.mid < value_mid:
-            self.mid = value_mid
+    def evaluate_sensors(self, sensor0, sensor1, sensor2):
+        self.sensors[0] = sensor0 - self.baseline[0]
+        self.sensors[1] = sensor1 - self.baseline[1]
+        self.sensors[2] = sensor2 - self.baseline[2]
         
-        if not hasattr(self, 'low') or self.low > value_low:
-            self.low = value_low
-        
-        if self.high > value_high or self.mid > value_high or self.low > value_high:
-            self.high = value_high
-            self.mid = value_mid
-            self.low = value_low
-
-    def evaluate_sensor(self, sensor):
-        sensor_value = 0
-
-        if sensor >= self.low: 
-            sensor_value += 1
-
-        if sensor >= self.mid: 
-            if sensor == self.mid:
-                sensor_value += 1
-            else:
-                sensor_value += 2
-
-        if sensor >= self.high: 
-            sensor_value += 1
-
-        return sensor_value
-
-    def evaluate(self, sensor0, sensor1, sensor2):
-        direction = self.evaluate_direction(sensor0, sensor1, sensor2)
-        self.evaluate_output(direction)
-
-    def evaluate_direction(self, sensor0, sensor1, sensor2):
-        value0 = self.evaluate_sensor(sensor0)
-        value1 = self.evaluate_sensor(sensor1)
-        value2 = self.evaluate_sensor(sensor2)
-        
-        heat_map = [value0, value1, value1, value1, value1, value2, value2]
-
-        direction = 'C'
-        if hasattr(self, 'rules'):
-            temp_list = self.rules[f'{value0}-{value1}-{value2}']
-            direction = temp_list
-
-            if direction == 'C':
-                self.calibrate(sensor0, sensor1, sensor2)
-                try:
-                    direction = self.evaluate_direction(sensor0, sensor1, sensor2)
-                except RuntimeError as re:
-                    direction = 'T'
-
-        return direction
-
-    def evaluate_output(self, direction):
-        compass = self.compass            
-
-        if direction in compass:
-            if compass[direction][1] == 0:
-                print(f'{direction}: Turn {compass[direction][0]} notch(es) clockwise')
-            elif compass[direction][1] == 1:
-                print(f'{direction}: Turn {compass[direction][0]} notch(es) counter-clockwise')
-            else:
-                print(f'{direction}: Unknown direction and moves')
+        for x in range(0,3):
+            if self.sensors[x] < 0:
+                self.sensors[x] = 0 
+        high = self.sensors.index(max(self.sensors))
+        low = self.sensors.index(min(self.sensors))
+        if high == low:
+            high = 0
+            mid = 1
+            low = 2
         else:
-            if direction == 'T':
-                print(f'T: Robot timed out, stuck in calibrate loop')
-            else:
-                print(f'U: Unknown direction and moves')
+            mid = 3 - (high + low)
+        
+        compare_unit = min(self.baseline[0], self.baseline[1], self.baseline[2])
+        high_low_diff = self.sensors[high] - self.sensors[low]  
+
+        # Establish relation between high and low values
+        if high_low_diff >= 9*compare_unit:
+            self.digital[high] = 4
+            self.digital[low] = 0
+        elif high_low_diff >= 7*compare_unit:
+            self.digital[high] = 3
+            self.digital[low] = 0
+        elif high_low_diff >= 5*compare_unit:
+            self.digital[high] = 2
+            self.digital[low] = 0
+        elif high_low_diff >= 2*compare_unit:
+            self.digital[high] = 1
+            self.digital[low] = 0
+        else:
+            self.digital[high] = 0
+            self.digital[low] = 0
+        
+        # First quartile
+        if self.sensors[mid] >= (high_low_diff)/4:
+            self.digital[mid] = round((self.digital[high] - self.digital[low])/4)
+        
+        # Second quartile
+        if self.sensors[mid] >= (high_low_diff)/2:
+            self.digital[mid] = round((self.digital[high] - self.digital[low])/2)
+
+        # Third quartile
+        if self.sensors[mid] >= 3*((high_low_diff)/4):
+            self.digital[mid] = round(3*(self.digital[high] - self.digital[low])/4)
+        
+        # If high and mid ratios are the same
+        if self.sensors[mid] == self.sensors[high]:
+            self.digital[mid] = self.digital[high]
+
+        # If mid and low ratios are the same
+        if self.sensors[mid] == self.sensors[low]:
+            self.digital[mid] = self.digital[low]
+        

@@ -1,19 +1,6 @@
 # FollowingRobotNeuralNetwork
 
 Test run robot logic
-> python neuralnetwork.py
+> python main.py
 
-compass.txt format
-> 1 2 3
-> 1. Cardinal direction 
-> 2. Number of moves to point north 
-> 3. Direction: 1 - clockwise, 0 - counter clockwise
-
-rules.txt format
-> 1 2 3 4
-> 1. Sensor 0 value 
-> 2. Sensor 1 value
-> 3. Sensor 2 value
-> 4. Cardinal Direction
-
-The training utilizes random number generation for the script to keep trying different combinations until it is able to complete the different tables that drive the fuzzy logic. Not alot of learning is being done because the model is not complex and dynamic enough to warrant a continuously changing neural network. However, adding more variables in determining the direction of the infrared light as well as generating the logic tables through "training" could motivate the need to have a dynamic neural network.
+The training utilizes data from the actual robot for the script to interpret. This data is used by the srcipt to complete a decision table. The decision table contains all of the discovered sensor states based on the provided sensor data that has been transalted by the designed fuzzy logic. This fuzzy logic takes in the analog values from the sensors compares it with the sensor values. The sensors are then ranked based on each comparison. This creates the sensor states. Each state will contain a list of all the possible voltage outputs that the robot can do to maximize the main infrared sensor. The list is updated to show which of the combinations are most successful for the robot to lookup. 
