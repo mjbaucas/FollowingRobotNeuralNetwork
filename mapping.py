@@ -2,84 +2,25 @@
 
 class MappingControl:
     def init(self):
-        self.map = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW']
-        self.data = {}
+        self.motor_left = {}
+        self.motor_right = {}
     
-    def simulate_mapping(self, sensor0, sensor1, sensor2, direction):
-        if sensor0 < 3 and sensor1 < 3 and sensor2 < 3:
-            return 0
-        
-        if sensor0 >= 3 and sensor1 < 3 and sensor2 < 3:
-            if direction == 'N':
-                return 1
-            return 0
-        
-        if sensor1 >= 3 and sensor0 < 3 and sensor2 < 3:
-            if direction == 'E':
-                return 1
-            return 0
-        
-        if sensor2 >= 3 and sensor0 < 3 and sensor1 < 3:
-            if direction == 'W':
-                return 1
-            return 0
-        
-        if sensor0 >= 3 and sensor1 >= 3 and sensor2 < 3:
-            if sensor0 > sensor1:
-                if direction == 'N':
-                    return 1
-                return 0
-            
-            if sensor0 == sensor1:
-                if direction == 'NE':
-                    return 1
-                return 0
-            
-            if sensor0 < sensor1:
-                if direction == 'E':
-                    return 1
-                return 0
-            
-        if sensor0 >= 3 and sensor2 >= 3 and sensor1 < 3:
-            if sensor0 > sensor2:
-                if direction == 'N':
-                    return 1
-                return 0
-            
-            if sensor0 == sensor2:
-                if direction == 'NW':
-                    return 1
-                return 0
-            
-            if sensor0 < sensor2:
-                if direction == 'W':
-                    return 1
-                return 0
-        
-        if sensor1 >= 3 and sensor2 >= 3 and sensor0 < 3:
-            if sensor1 > sensor2:
-                if direction == 'SE':
-                    return 1
-                return 0
-            
-            if sensor1 == sensor2:
-                if direction == 'S':
-                    return 1
-                return 0
-            
-            if sensor1 < sensor2:
-                if direction == 'SW':
-                    return 1
-                return 0
-
-        if sensor0 >= 3 and sensor1 >= 3 and sensor2 >= 3:
-            return 0
-    
-    def update_mapping(self, data):
-        file = open('rules.txt', 'w')
-        file.close()
-        file = open("rules.txt", "a")
-
+    def train_mapping(self, data, environment):
         for key, value in data.items():
-            sensor_values = key.split("_")
-            file.write(f'{sensor_values[0]} {sensor_values[1]} {sensor_values[2]} {value}\n')
+            environment.evaluate_sensors(value[0], value[1], value[2])
+            control_key = f'{environment.digital[0]}_{environment.digital[1]}_{environment.digital[2]}'
+
+            if control_key not in self.motor_left:
+                self.motor_left[control_key] = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+            if control_key not in self.motor_right:
+                self.motor_right[control_key] = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+
+            if value[5] < 1000 and value[5] > 0:
+                self.motor_left[control_key][value[3]+9] += 1
+                self.motor_right[control_key][value[3]+9] += 1
+            elif value[5] == 0:
+                self.motor_left[control_key][value[3]+9] += 2
+                self.motor_right[control_key][value[3]+9] += 2
+            else:
+                self.motor_left[control_key][value[3]+9] -= 2
+                self.motor_right[control_key][value[3]+9] -= 2
