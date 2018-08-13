@@ -98,14 +98,14 @@ void loop() {
     inputVoltage[1] = random(-9,9);
     
     // Look up situation, random values if not found
-    for (i=0;i<sizeof(lookup);i++)
-    {
-      if (roundPin[0] == lookup[i][0] && roundPin[1] == lookup[i][1] && roundPin[2] == lookup[i][2])
-      {
-        inputVoltage[0] = lookup[i][3];
-        inputVoltage[1] = lookup[i][4];
-      }
-    }
+//    for (i=0;i<sizeof(lookup);i++)
+//    {
+//      if (roundPin[0] == lookup[i][0] && roundPin[1] == lookup[i][1] && roundPin[2] == lookup[i][2])
+//      {
+//        inputVoltage[0] = lookup[i][3];
+//        inputVoltage[1] = lookup[i][4];
+//      }
+//    }
   
     // Assert the new voltages
     ST.write(byte(64 + inputVoltage[0] * 5));
@@ -113,6 +113,7 @@ void loop() {
     
     delay(timeDelay);
 
+    Serial.print("Packet: ");
     // Print the input sensor data to be used for the test
     for (i=0;i<3;i++)
     {
