@@ -7,7 +7,7 @@ class MappingControl:
     def train_mapping(self, data, environment):
         for key, value in data.items():
             environment.evaluate_sensors(value[0], value[1], value[2])
-            control_key = f'{environment.digital[0]}_{environment.digital[1]}_{environment.digital[2]}'
+            control_key = f'{environment.digital[0]},{environment.digital[1]},{environment.digital[2]}'
 
             if control_key not in self.motor_pair:
                 self.motor_pair[control_key] = [[0] * 19 for i in range(19)]
@@ -55,12 +55,21 @@ class MappingControl:
                 for y in range(0, 19):
                     if value[x][y] > max_val:
                         max_val = value[x][y]
-                        pair_list = [f'{x}_{y}']
+                        pair_list = [f'{x-9},{y-9}']
                     elif value[x][y] == max_val and max_val > 0:
-                        pair_list.append(f'{x}_{y}')
+                        pair_list.append(f'{x-9},{y-9}')
             data_table[key] = pair_list
+
+        # print(data_table) 
+        self.generate_data_string(data_table)
+
+    def generate_data_string(self, data_table):
+        final_string = ""
+        for key, value in data_table.items():
+            if len(value) > 0:
+                final_string = f'{final_string}{{{key},{value[0]}}},'
         
-        print(data_table)
+        print(final_string)
 
     def display_data(self):
         for key, value in self.motor_pair.items():
