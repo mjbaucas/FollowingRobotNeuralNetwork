@@ -31,7 +31,7 @@ class Environment:
         else:
             mid = 3 - (high + low)
         
-        compare_unit = min(self.baseline[0], self.baseline[1], self.baseline[2])
+        compare_unit = 50
         high_low_diff = self.sensors[high] - self.sensors[low]  
 
         # Establish relation between high and low values
