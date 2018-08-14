@@ -55,9 +55,9 @@ class MappingControl:
                 for y in range(0, 19):
                     if value[x][y] > max_val:
                         max_val = value[x][y]
-                        pair_list = [f'{x}_{y}']
+                        pair_list = [f'{x-9}_{y-9}']
                     elif value[x][y] == max_val and max_val > 0:
-                        pair_list.append(f'{x}_{y}')
+                        pair_list.append(f'{x-9}_{y-9}')
             data_table[key] = pair_list
         
         print(data_table)
