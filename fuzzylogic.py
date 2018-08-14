@@ -8,26 +8,6 @@ class Environment:
         self.sensors = [0, 0, 0]
         self.calibrate(sensor0, sensor1, sensor2)
 
-    def set_rules(self):
-        file = open("rules.txt", "r")
-        
-        temp_dict = {}
-        for line in file:
-            temp_list = line.split()
-            temp_dict[f'{temp_list[0]}-{temp_list[1]}-{temp_list[2]}'] = temp_list[3]
-        
-        return temp_dict
-    
-    def set_compass(self):
-        file = open("compass.txt", "r")
-        
-        temp_dict = {}
-        for line in file:
-            temp_list = line.split()
-            temp_dict[temp_list[0]] = [int(temp_list[1]), int(temp_list[2])]
-    
-        return temp_dict
-
     def calibrate(self, sensor0_data, sensor1_data, sensor2_data):
         self.baseline[0] = min(sensor0_data)
         self.baseline[1] = min(sensor1_data)
@@ -40,7 +20,8 @@ class Environment:
         
         for x in range(0,3):
             if self.sensors[x] < 0:
-                self.sensors[x] = 0 
+                self.sensors[x] = 0
+
         high = self.sensors.index(max(self.sensors))
         low = self.sensors.index(min(self.sensors))
         if high == low:
