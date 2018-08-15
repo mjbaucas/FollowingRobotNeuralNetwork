@@ -7,7 +7,7 @@ if __name__ == "__main__":
     environment = Environment()
     mapping_control = MappingControl()
     
-    datafile = open('data.csv', 'r', encoding="utf-8-sig")
+    datafile = open('data.csv', 'r')
     
     temp_dict = {}
     sensor0_list = []
