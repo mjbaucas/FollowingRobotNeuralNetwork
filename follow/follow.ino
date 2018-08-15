@@ -3,9 +3,10 @@
 int i;                // Looping variable
 int j;                // Looping variable
 int inPin[3];         // Input pins coming from the ADC
+int oldPin[3];
 int roundPin[3];       // Rounded pin values
 int outPin = 13;      // Output serial pin for motor control
-int timeDelay = 50;    // Delay between issuing a signal and reading, milliseconds
+int timeDelay = 100;    // Delay between issuing a signal and reading, milliseconds
 
 int proxPin = 11;     // Digital input pin used for the proximity sensor
 int proxVal;          // Value from the input of the proximity pin
@@ -19,27 +20,30 @@ int normal[3];
 int discrete[3];
 int mode[3];          // Contains the mode values obtained from calibration
 int motorSpeed = 17;  // The general speed of the robot
-int compare = 50;
+int compare = 25;
 
-int inputVoltage[2];  // Inputs to the Sabretooth
+int inVolt[2];  // Inputs to the Sabretooth
 
-//int lookup[][5] = {{0,0,0,0,0},{0,0,1,-3,1},{0,0,3,-5,1},{0,1,1,-2,-4},{0,2,2,4,2},{0,2,3,-9,2},{0,2,4,0,1},{0,3,2,0,4},{0,3,4,-5,-4},{0,4,1,-8,2},{0,4,2,-4,2},{0,4,3,0,-7},{1,0,1,-9,-7},{1,0,4,2,2},{2,0,4,-6,-9},{2,3,0,2,2},{3,0,4,-8,8},{3,4,0,3,3},{4,1,0,-7,-7},{4,2,0,-9,-8},{4,3,0,2,4}};
-int lookup[][5] = {{0,0,0, 0, 0},{0,0,1, 5,-5},{0,0,3, 5,-5},{0,0,3,5,-5},{0,0,4,5,-5}
-                  ,{0,1,0, 5,-5},{0,1,1, 5,-5},{0,1,2, 5,-5},{0,1,3,5,-5},{0,1,4,5,-5}
-                  ,{0,2,0, 6,-6},{0,2,1, 6,-6},{0,2,2, 6,-6},{0,2,3,7,-7},{0,2,4,8,-8}
-                  ,{0,3,0, 5,-5},{0,3,1, 5,-5},{0,3,2, 5,-5},{0,3,3,8,-8},{0,3,4,8,-8}
-                  ,{0,4,0,-8, 8},{0,4,1,-8, 8},{0,4,2,-7, 7},{0,4,3,6,-6},{0,4,4,6,-6}
-                  ,{1,0,0, 9, 7},{1,0,1, 9, 7},{1,0,2, 9, 7},{1,0,3,6, 4},{1,0,4,6, 2}
-                  ,{1,1,0, 9, 7},{1,1,1, 9, 7},{1,1,2, 9, 7},{1,1,3,6, 4},{1,1,4,6, 2}
-                  ,{1,2,0, 9, 7},{1,2,1, 9, 7},{1,2,2, 9, 7},{1,2,3,6, 4},{1,2,4,6, 2}
-                  ,{1,3,0, 9, 7},{1,3,1, 9, 7},{1,3,2, 9, 7},{1,3,3,6, 4},{1,3,4,6, 2}
-                  ,{1,4,0, 9, 7},{1,4,1, 9, 7},{1,4,2, 9, 7},{1,4,3,6, 4},{1,4,4,6, 2}
-                  ,{2,0,0, 6, 4},{2,0,1, 6, 4},{2,0,2, 6, 4},{2,0,3,6, 4},{2,0,4,6, 5}
-                  ,{2,3,0, 5, 6},{2,3,1, 5, 6},{2,3,2, 5, 6},{2,3,3,5, 6},{2,3,4,5, 6}
-                  ,{3,0,0, 9, 8},{3,0,1, 9, 8},{3,0,2, 9, 6},{3,0,3,9, 6},{3,0,4,9, 6}
-                  ,{3,1,0, 6, 8},{3,1,1, 6, 8},{3,2,2, 6, 8},{3,3,3,6, 9},{3,4,4,6, 9}
-                  ,{4,2,0, 8, 8},{4,2,1, 8, 8},{4,2,2, 8, 9},{4,2,3,9, 6},{4,2,4,9, 6}
-                  ,{4,3,0, 8, 8},{4,3,1, 8, 8},{4,3,2, 8, 9},{4,3,3,6, 9},{4,3,4,6, 9}};
+char buffer[100];
+
+int lookup[][5] = {{0,0,0,0,0},{0,1,1,-7,7},{0,2,0,5,-5},{0,2,2,0,0},{0,4,1,-8,8},{0,4,2,-8,8},{1,0,1,9,7},{1,0,2,-4,6},{1,1,0,9,7},{2,0,3,-4,-9},{2,0,4,4,4},{2,3,0,0,0},{3,0,4,5,-5},{3,2,0,6,4},{3,4,0,9,7},{4,0,2,-6,5},{4,0,3,4,6},{4,2,0,-4,6}};
+//int lookup[][5] = {{0,0,0, 0, 0},{0,0,1, 5,-5},{0,0,3, 5,-5},{0,0,3,5,-5},{0,0,4,5,-5}
+//                  ,{0,1,0, 5,-5},{0,1,1, 5,-5},{0,1,2, 5,-5},{0,1,3,5,-5},{0,1,4,5,-5}
+//                  ,{0,2,0, 6,-6},{0,2,1, 6,-6},{0,2,2, 6,-6},{0,2,3,7,-7},{0,2,4,8,-8}
+//                  ,{0,3,0, 5,-5},{0,3,1, 5,-5},{0,3,2, 5,-5},{0,3,3,8,-8},{0,3,4,8,-8}
+//                  ,{0,4,0,-8, 8},{0,4,1,-8, 8},{0,4,2,-7, 7},{0,4,3,6,-6},{0,4,4,6,-6}
+//                  ,{1,0,0, 9, 7},{1,0,1, 9, 7},{1,0,2, 9, 7},{1,0,3,6, 4},{1,0,4,6, 2}
+//                  ,{1,1,0, 9, 7},{1,1,1, 9, 7},{1,1,2, 9, 7},{1,1,3,6, 4},{1,1,4,6, 2}
+//                  ,{1,2,0, 9, 7},{1,2,1, 9, 7},{1,2,2, 9, 7},{1,2,3,6, 4},{1,2,4,6, 2}
+//                  ,{1,3,0, 9, 7},{1,3,1, 9, 7},{1,3,2, 9, 7},{1,3,3,6, 4},{1,3,4,6, 2}
+//                  ,{1,4,0, 9, 7},{1,4,1, 9, 7},{1,4,2, 9, 7},{1,4,3,6, 4},{1,4,4,6, 2}
+//                  ,{2,0,0, 6, 4},{2,0,1, 6, 4},{2,0,2, 6, 4},{2,0,3,6, 4},{2,0,4,6, 5}
+//                  ,{2,3,0, 5, 6},{2,3,1, 5, 6},{2,3,2, 5, 6},{2,3,3,5, 6},{2,3,4,5, 6}
+//                  ,{3,0,0, 9, 8},{3,0,1, 9, 8},{3,0,2, 9, 6},{3,0,3,9, 6},{3,0,4,9, 6}
+//                  ,{3,1,0, 6, 8},{3,1,1, 6, 8},{3,2,2, 6, 8},{3,3,3,6, 9},{3,4,4,6, 9}
+//                  ,{4,2,0, 8, 8},{4,2,1, 8, 8},{4,2,2, 8, 9},{4,2,3,9, 6},{4,2,4,9, 6}
+//                  ,{4,3,0, 8, 8},{4,3,1, 8, 8},{4,3,2, 8, 9},{4,3,3,6, 9},{4,3,4,6, 9}};
+//int lookup[][5] = {{}};
 
 
 SoftwareSerial ST = SoftwareSerial(0, 13); // Serial variable to control the motor
@@ -85,40 +89,8 @@ void loop() {
   // Stop the robot if the proximity detector is triggered
   if (proxVal > 0)
   {
-//    // Get the new values of each analog input and print it to the serial monitor
-    for (i = 0; i < 3; i++)
-    {
-      inPin[i] = analogRead(i);
-//      Serial.print(inPin[i]);
-//      Serial.print(",");
-//      Serial.print(mode[i]);
-//      if (i != 2)
-//      {
-//        Serial.print(",");
-//      }
-    }
-    Serial.print("\n");
-  
-  
-  
-    // Use the neural network to find the input voltages
-    // Round the sensor values
-    for (i=0;i<3;i++)
-    {
-      roundPin[i] = roundTo(inPin[i], 50);
-    }
-//    Serial.print("Rounded: ");
-//    for (i=0;i<3;i++)
-//    {
-//      Serial.print(roundPin[i]);
-//      Serial.print(",");
-//    }
-//    Serial.print("\n");
-    
-    // Initialize to random voltages
-    inputVoltage[0] = random(-9,9);
-    inputVoltage[1] = random(-9,9);
-    
+
+    // Find which values are the largest  
     for (i=0;i<3;i++)
     {
       // Reset index
@@ -203,56 +175,67 @@ void loop() {
     discrete[indexAlt[0]] = high;
     discrete[indexAlt[1]] = mid;
     discrete[indexAlt[2]] = 0;
+  
+    // Initialize to random voltages
+    inVolt[0] = random(-9,9);
+    inVolt[1] = random(-9,9);
     
+    if (inVolt[0] > 0 && inVolt[0] < 4)
+    {
+      inVolt[0] = 4;
+    }
+    else if (inVolt[0] <= 0 && inVolt[0] > -4)
+    {
+      inVolt[0] = -4;
+    }
+    if (inVolt[1] > 0 && inVolt[1] < 4)
+    {
+      inVolt[1] = 4;
+    }
+    else if (inVolt[1] <= 0 && inVolt[1] > -4)
+    {
+      inVolt[1] = -4;
+    }
+    
+    sprintf(buffer, "inVolt[0]: %d\ninVolt[1]: %d\n", inVolt[0], inVolt[1]);
+    Serial.print(buffer);
+        
     // Look up situation, random values if not found
-    for (i=0;i<sizeof(lookup);i++)
+    for (i=0;i<sizeof(lookup)/sizeof(lookup[0]);i++)
     {      
       if (discrete[0] == lookup[i][0] && discrete[1] == lookup[i][1] && discrete[2] == lookup[i][2])
       {
         Serial.print("FOUND\n");
-        inputVoltage[0] = lookup[i][3];
-        inputVoltage[1] = lookup[i][4];
+        Serial.print(i);
+        inVolt[0] = lookup[i][3];
+        inVolt[1] = lookup[i][4];
         break;
       }
     }
-    
-    Serial.print("System Input: ");
-    Serial.print(discrete[0]);
-    Serial.print(discrete[1]);
-    Serial.print(discrete[2]);
-    Serial.print("\n");
-    Serial.print("System Output: ");
-    Serial.print(inputVoltage[0]);
-    Serial.print(inputVoltage[1]);
-    Serial.print("\n");
+
+    sprintf(buffer, "System Input: %d %d %d\n", discrete[0], discrete[1], discrete[2]);
+    Serial.print(buffer);
+    sprintf(buffer, "System Output: %d %d\n", inVolt[0], inVolt[1]);
+    Serial.print(buffer);
   
     // Assert the new voltages
-    ST.write(byte(64 + inputVoltage[0] * 5));
-    ST.write(byte(192 + inputVoltage[1] * 5));
+    ST.write(byte(64 + inVolt[0] * 4));
+    ST.write(byte(192 + inVolt[1] * 4));
     
+    // Let the robot do its thing for a short amount of time
     delay(timeDelay);
 
-    Serial.print("Packet: ");
-    // Print the input sensor data to be used for the test
+    // Update the sensor values
     for (i=0;i<3;i++)
     {
-      Serial.print(inPin[i]);
-      Serial.print(",");
+      oldPin[i] = inPin[i];
       inPin[i] = analogRead(i);
     }
     
-    // Print the voltages that will be used for the test
-    Serial.print(inputVoltage[0]);
-    Serial.print(",");
-    Serial.print(inputVoltage[1]);
-    Serial.print(",");
+    // The packet to be stored
+    sprintf(buffer, "Packet: %d,%d,%d,%d,%d,%d,%d,%d\n", oldPin[0], oldPin[1], oldPin[2], inVolt[0], inVolt[1], inPin[0], inPin[1], inPin[2]);
+    Serial.print(buffer);
     
-    // Print the output sensor values of the test
-    Serial.print(inPin[0]);
-    Serial.print(",");
-    Serial.print(inPin[1]);
-    Serial.print(",");
-    Serial.print(inPin[2]);
     Serial.print("\n");
   }
 }
