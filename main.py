@@ -16,7 +16,7 @@ if __name__ == "__main__":
     counter = 0
     for line in datafile:
         temp_list = line.split(',')
-        if len(temp_list) == 8 or '-' in temp_list:
+        if len(temp_list) == 8:
             temp_dict[counter] = [int(temp_list[0]), int(temp_list[1]), int(temp_list[2]), int(temp_list[3]), int(temp_list[4]), int(temp_list[5]), int(temp_list[6]), int(temp_list[7][:-1])]
             
             if counter < 7:

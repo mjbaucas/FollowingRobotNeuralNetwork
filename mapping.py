@@ -20,25 +20,22 @@ class MappingControl:
             left_sensor = 0
             right_sensor = 0
             front_sensor = 0
+            compare_unit = 25
 
-            if delta_signal[2] > 0:
+            if delta_signal[2] > compare_unit:
                 left_sensor = 1
-            if delta_signal[2] > 50:
-                left_sensor = 2
 
-            if delta_signal[1] > 0:
-                right_sensor = 1 
-            if delta_signal[1] > 50:
-                right_sensor = 2
+            if delta_signal[1] > compare_unit:
+                right_sensor = 1
 
             if delta_signal[0] > 0: 
                 front_sensor = 1
-            if delta_signal[0] > 50:
+            if delta_signal[0] > compare_unit:
                 front_sensor = 2
                 
-            if right_sensor >= 1:
+            if right_sensor == 1:
                 self.motor_pair[control_key][value[3]+9][value[4]+9] -= right_sensor
-            if left_sensor >= 1:
+            if left_sensor == 1:
                 self.motor_pair[control_key][value[3]+9][value[4]+9] -= left_sensor
             
             if front_sensor > 0:
