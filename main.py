@@ -16,9 +16,9 @@ if __name__ == "__main__":
     counter = 0
     for line in datafile:
         temp_list = line.split(',')
-        if len(temp_list) == 8:
+        if len(temp_list) == 8 and all(not i.isalpha() for i in temp_list):
             temp_values = [int(temp_list[0]), int(temp_list[1]), int(temp_list[2]), int(temp_list[3]), int(temp_list[4]), int(temp_list[5]), int(temp_list[6]), int(temp_list[7][:-1])]
-            if all(i <= 1000 for i in temp_values):
+            if all(i <= 1000 for i in temp_values): 
                 temp_dict[counter] = temp_values 
                 if counter < 7:
                     sensor0_list.append(int(temp_list[0]))
