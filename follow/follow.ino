@@ -3,48 +3,45 @@
 int i;                // Looping variable
 int j;                // Looping variable
 int inPin[3];         // Input pins coming from the ADC
-int oldPin[3];
-int roundPin[3];       // Rounded pin values
+int oldPin[3];        // Keeps track of previous sensor values for sample
 int outPin = 13;      // Output serial pin for motor control
-int timeDelay = 100;    // Delay between issuing a signal and reading, milliseconds
+int timeDelay = 100;  // Delay between issuing a signal and reading, milliseconds
 
 int proxPin = 11;     // Digital input pin used for the proximity sensor
 int proxVal;          // Value from the input of the proximity pin
 
-int range;
-int high;
-int mid;
-int index[3];
-int indexAlt[3];
-int normal[3];
-int discrete[3];
+int range;            // The range from highest normalized value compared to lowest
+int high;             // Value considered high in this sample
+int mid;              // Value considered medium in this sample
+int index[3];         // Gives the order from 1-3 of each sensor
+int indexAlt[3];      // Gives the index of each sensor from highest to lowest
+int normal[3];        // Normalized values after the baseline consideration
+int discrete[3];      // Sensor values normalized from 0-4
 int mode[3];          // Contains the mode values obtained from calibration
 int motorSpeed = 17;  // The general speed of the robot
-int compare = 25;
+int compare = 25;     // Used for sensitivity of the sensors
 
-int inVolt[2];  // Inputs to the Sabretooth
+int inVolt[2];        // Inputs to the Sabretooth
 
-char buffer[100];
+char buffer[100];     // String buffer to output through serial
 
-int lookup[][5] = {{0,0,0,0,0},{0,1,1,-7,7},{0,2,0,5,-5},{0,2,2,0,0},{0,4,1,-8,8},{0,4,2,-8,8},{1,0,1,9,7},{1,0,2,-4,6},{1,1,0,9,7},{2,0,3,-4,-9},{2,0,4,4,4},{2,3,0,0,0},{3,0,4,5,-5},{3,2,0,6,4},{3,4,0,9,7},{4,0,2,-6,5},{4,0,3,4,6},{4,2,0,-4,6}};
-//int lookup[][5] = {{0,0,0, 0, 0},{0,0,1, 5,-5},{0,0,3, 5,-5},{0,0,3,5,-5},{0,0,4,5,-5}
-//                  ,{0,1,0, 5,-5},{0,1,1, 5,-5},{0,1,2, 5,-5},{0,1,3,5,-5},{0,1,4,5,-5}
-//                  ,{0,2,0, 6,-6},{0,2,1, 6,-6},{0,2,2, 6,-6},{0,2,3,7,-7},{0,2,4,8,-8}
-//                  ,{0,3,0, 5,-5},{0,3,1, 5,-5},{0,3,2, 5,-5},{0,3,3,8,-8},{0,3,4,8,-8}
-//                  ,{0,4,0,-8, 8},{0,4,1,-8, 8},{0,4,2,-7, 7},{0,4,3,6,-6},{0,4,4,6,-6}
-//                  ,{1,0,0, 9, 7},{1,0,1, 9, 7},{1,0,2, 9, 7},{1,0,3,6, 4},{1,0,4,6, 2}
-//                  ,{1,1,0, 9, 7},{1,1,1, 9, 7},{1,1,2, 9, 7},{1,1,3,6, 4},{1,1,4,6, 2}
-//                  ,{1,2,0, 9, 7},{1,2,1, 9, 7},{1,2,2, 9, 7},{1,2,3,6, 4},{1,2,4,6, 2}
-//                  ,{1,3,0, 9, 7},{1,3,1, 9, 7},{1,3,2, 9, 7},{1,3,3,6, 4},{1,3,4,6, 2}
-//                  ,{1,4,0, 9, 7},{1,4,1, 9, 7},{1,4,2, 9, 7},{1,4,3,6, 4},{1,4,4,6, 2}
-//                  ,{2,0,0, 6, 4},{2,0,1, 6, 4},{2,0,2, 6, 4},{2,0,3,6, 4},{2,0,4,6, 5}
-//                  ,{2,3,0, 5, 6},{2,3,1, 5, 6},{2,3,2, 5, 6},{2,3,3,5, 6},{2,3,4,5, 6}
-//                  ,{3,0,0, 9, 8},{3,0,1, 9, 8},{3,0,2, 9, 6},{3,0,3,9, 6},{3,0,4,9, 6}
-//                  ,{3,1,0, 6, 8},{3,1,1, 6, 8},{3,2,2, 6, 8},{3,3,3,6, 9},{3,4,4,6, 9}
-//                  ,{4,2,0, 8, 8},{4,2,1, 8, 8},{4,2,2, 8, 9},{4,2,3,9, 6},{4,2,4,9, 6}
-//                  ,{4,3,0, 8, 8},{4,3,1, 8, 8},{4,3,2, 8, 9},{4,3,3,6, 9},{4,3,4,6, 9}};
-//int lookup[][5] = {{}};
-
+//int lookup[][5] = {{0,0,0,5,-5},{0,0,1,-6,-4},{0,1,1,4,-7},{0,2,0,-4,-4},{0,2,1,-8,6},{0,2,2,0,0},{0,3,2,-6,6},{0,3,4,-5,-4},{0,4,1,-4,-4},{0,4,2,-4,-9},{0,4,3,-4,-4},{1,0,1,0,0},{1,0,2,-4,4},{1,0,4,7,4},{1,1,0,-4,4},{2,0,2,7,-4},{2,0,3,4,4},{2,0,4,-7,-5},{2,2,0,-4,-5},{2,3,0,0,0},{3,0,2,-9,-4},{3,0,4,5,-5},{3,2,0,-8,-4},{3,4,0,-8,4},{4,0,2,-6,5},{4,0,3,4,6},{4,1,0,-5,-4},{4,2,0,-9,-8},{4,3,0,-4,4}};
+int lookup[][5] = {{0,0,0, 0, 0},{0,0,1, 5,-5},{0,0,3, 5,-5},{0,0,3,5,-5},{0,0,4,5,-5}
+                  ,{0,1,0, 5,-5},{0,1,1, 5,-5},{0,1,2, 5,-5},{0,1,3,5,-5},{0,1,4,5,-5}
+                  ,{0,2,0, 6,-6},{0,2,1, 6,-6},{0,2,2, 6,-6},{0,2,3,7,-7},{0,2,4,8,-8}
+                  ,{0,3,0, 5,-5},{0,3,1, 5,-5},{0,3,2, 5,-5},{0,3,3,8,-8},{0,3,4,8,-8}
+                  ,{0,4,0,-8, 8},{0,4,1,-8, 8},{0,4,2,-7, 7},{0,4,3,6,-6},{0,4,4,6,-6}
+                  ,{1,0,0, 9, 7},{1,0,1, 9, 7},{1,0,2, 9, 7},{1,0,3,6, 4},{1,0,4,6, 2}
+                  ,{1,1,0, 9, 7},{1,1,1, 9, 7},{1,1,2, 9, 7},{1,1,3,6, 4},{1,1,4,6, 2}
+                  ,{1,2,0, 9, 7},{1,2,1, 9, 7},{1,2,2, 9, 7},{1,2,3,6, 4},{1,2,4,6, 2}
+                  ,{1,3,0, 9, 7},{1,3,1, 9, 7},{1,3,2, 9, 7},{1,3,3,6, 4},{1,3,4,6, 2}
+                  ,{1,4,0, 9, 7},{1,4,1, 9, 7},{1,4,2, 9, 7},{1,4,3,6, 4},{1,4,4,6, 2}
+                  ,{2,0,0, 6, 4},{2,0,1, 6, 4},{2,0,2, 6, 4},{2,0,3,6, 4},{2,0,4,6, 5}
+                  ,{2,3,0, 5, 6},{2,3,1, 5, 6},{2,3,2, 5, 6},{2,3,3,5, 6},{2,3,4,5, 6}
+                  ,{3,0,0, 9, 8},{3,0,1, 9, 8},{3,0,2, 9, 6},{3,0,3,9, 6},{3,0,4,9, 6}
+                  ,{3,1,0, 6, 8},{3,1,1, 6, 8},{3,2,2, 6, 8},{3,3,3,6, 9},{3,4,4,6, 9}
+                  ,{4,2,0, 8, 8},{4,2,1, 8, 8},{4,2,2, 8, 9},{4,2,3,9, 6},{4,2,4,9, 6}
+                  ,{4,3,0, 8, 8},{4,3,1, 8, 8},{4,3,2, 8, 9},{4,3,3,6, 9},{4,3,4,6, 9}};
 
 SoftwareSerial ST = SoftwareSerial(0, 13); // Serial variable to control the motor
 
@@ -196,17 +193,13 @@ void loop() {
     {
       inVolt[1] = -4;
     }
-    
-    sprintf(buffer, "inVolt[0]: %d\ninVolt[1]: %d\n", inVolt[0], inVolt[1]);
-    Serial.print(buffer);
         
     // Look up situation, random values if not found
     for (i=0;i<sizeof(lookup)/sizeof(lookup[0]);i++)
     {      
       if (discrete[0] == lookup[i][0] && discrete[1] == lookup[i][1] && discrete[2] == lookup[i][2])
       {
-        Serial.print("FOUND\n");
-        Serial.print(i);
+        //Serial.print("FOUND\n");
         inVolt[0] = lookup[i][3];
         inVolt[1] = lookup[i][4];
         break;
